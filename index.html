@@ -595,7 +595,7 @@
 
           <div id="singleMatriculaContainer" class="form-group hidden">
             <label>Matrícula do Colaborador *</label>
-            <input type="text" id="matricula" placeholder="Ex: 12345678" pattern="\d{8,9}" title="A matrícula deve conter de 8 a 9 dígitos numéricos.">
+            <input type="number" id="matricula" placeholder="De 800000 a 9999999" min="800000" max="9999999" title="A matrícula deve ser um número entre 800000 e 9999999.">
           </div>
         </div>
 
@@ -630,8 +630,8 @@
                 <input type="text" class="colab-nome" placeholder="Nome do colaborador" required>
               </div>
               <div>
-                <label style="font-size: 12px; color: #64748b;">Matrícula (8-9 dígitos)</label>
-                <input type="text" class="colab-matricula" placeholder="Ex: 12345678" required>
+                <label style="font-size: 12px; color: #64748b;">Matrícula (800000 a 9999999)</label>
+                <input type="number" class="colab-matricula" placeholder="Ex: 852030" min="800000" max="9999999" required>
               </div>
               <div>
                 <label style="font-size: 12px; color: #64748b;">Início das Férias</label>
@@ -697,8 +697,8 @@ function addColaboradorField() {
       <input type="text" class="colab-nome" placeholder="Nome do colaborador" required>
     </div>
     <div>
-      <label style="font-size: 12px; color: #64748b;">Matrícula (8-9 dígitos)</label>
-      <input type="text" class="colab-matricula" placeholder="Ex: 12345678" required>
+      <label style="font-size: 12px; color: #64748b;">Matrícula (800000 a 9999999)</label>
+      <input type="number" class="colab-matricula" placeholder="Ex: 852030" min="800000" max="9999999" required>
     </div>
     <div>
       <label style="font-size: 12px; color: #64748b;">Início das Férias</label>
@@ -707,6 +707,12 @@ function addColaboradorField() {
     <button type="button" class="btn-remove-ferias" onclick="this.parentElement.remove()">X</button>
   `;
   container.appendChild(newItem);
+}
+
+// Função auxiliar para validar se um número de matrícula está dentro das regras estabelecidas
+function validarRegraMatricula(valor) {
+  const numero = parseInt(valor, 10);
+  return !isNaN(numero) && numero >= 800000 && numero <= 9999999;
 }
 
 // Reseta o formulário por completo
@@ -723,8 +729,8 @@ function resetForm() {
         <input type="text" class="colab-nome" placeholder="Nome do colaborador" required>
       </div>
       <div>
-        <label style="font-size: 12px; color: #64748b;">Matrícula (8-9 dígitos)</label>
-        <input type="text" class="colab-matricula" placeholder="Ex: 12345678" required>
+        <label style="font-size: 12px; color: #64748b;">Matrícula (800000 a 9999999)</label>
+        <input type="number" class="colab-matricula" placeholder="Ex: 852030" min="800000" max="9999999" required>
       </div>
       <div>
         <label style="font-size: 12px; color: #64748b;">Início das Férias</label>
@@ -773,7 +779,6 @@ async function createTicket() {
   let obsGerais = document.getElementById('descricao').value
   
   let payloadDescricao = "";
-  const matriculaRegex = /^\d{8,9}$/;
 
   // VALIDAÇÃO E COLETA SE FOR CATEGORIA FÉRIAS
   if (tipo === 'Férias') {
@@ -795,7 +800,7 @@ async function createTicket() {
         break;
       }
 
-      if (!matriculaRegex.test(matrVal)) {
+      if (!validRegraMatricula(matrVal)) {
         validMatricula = false;
         break;
       }
@@ -810,7 +815,7 @@ async function createTicket() {
     }
 
     if (!validMatricula) {
-      showTicketMessage('Certifique-se de que todas as matrículas adicionadas possuem estritamente entre 8 e 9 dígitos numéricos.', 'error');
+      showTicketMessage('Erro: Existem matrículas fora do intervalo permitido (de 800000 a 9999999).', 'error');
       return;
     }
 
@@ -821,8 +826,8 @@ async function createTicket() {
     // VALIDAÇÃO PARA OUTROS TIPOS DE CHAMADOS (INDIVIDUAL)
     const matriculaIndividual = document.getElementById('matricula').value.trim();
     
-    if (!matriculaRegex.test(matriculaIndividual)) {
-      showTicketMessage('A matrícula é obrigatória e deve conter estritamente de 8 a 9 dígitos numéricos.', 'error');
+    if (!validRegraMatricula(matriculaIndividual)) {
+      showTicketMessage('A matrícula é obrigatória e deve ser um número entre 800000 e 9999999.', 'error');
       return;
     }
     
