@@ -1,76 +1,80 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CMAA - Portal RH</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <style>
+
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      font-family: Arial, Helvetica, sans-serif;
+      font-family: 'Inter', sans-serif;
     }
 
     body {
-      background: #f4f6f9;
-      color: #1f2937;
+      background: #f4f7fb;
+      color: #1e293b;
     }
 
     .hidden {
       display: none !important;
     }
 
-    .container {
-      width: 100%;
-      min-height: 100vh;
-    }
-
     .login-screen {
+      min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
-      background: linear-gradient(135deg, #003b73, #0f766e);
+      background: linear-gradient(135deg,#065f46,#16a34a);
       padding: 20px;
     }
 
-    .card {
-      background: white;
-      padding: 30px;
-      border-radius: 16px;
+    .login-card {
       width: 100%;
-      max-width: 450px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      max-width: 430px;
+      background: white;
+      border-radius: 24px;
+      padding: 40px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.15);
     }
 
     .logo {
       text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .logo img {
+      width: 220px;
       margin-bottom: 20px;
     }
 
     .logo h1 {
-      color: #003b73;
-      font-size: 28px;
-      margin-bottom: 5px;
+      font-size: 30px;
+      margin-bottom: 8px;
+      color: #111827;
     }
 
     .logo p {
-      color: #6b7280;
-      font-size: 14px;
+      color: #64748b;
     }
 
     .form-group {
-      margin-bottom: 16px;
+      margin-bottom: 18px;
     }
 
     label {
       display: block;
-      margin-bottom: 6px;
-      font-weight: bold;
+      margin-bottom: 8px;
+      font-weight: 600;
       font-size: 14px;
     }
 
@@ -78,44 +82,37 @@
     textarea,
     select {
       width: 100%;
-      padding: 12px;
-      border: 1px solid #d1d5db;
-      border-radius: 10px;
+      padding: 14px;
+      border: 1px solid #dbe3ec;
+      border-radius: 14px;
       font-size: 14px;
+      background: white;
     }
 
     textarea {
-      min-height: 120px;
+      min-height: 140px;
       resize: vertical;
     }
 
     button {
-      width: 100%;
-      padding: 12px;
       border: none;
-      border-radius: 10px;
       cursor: pointer;
-      font-weight: bold;
       transition: 0.2s;
+      font-weight: 600;
     }
 
     .btn-primary {
-      background: #003b73;
+      width: 100%;
+      background: linear-gradient(90deg,#15803d,#16a34a);
       color: white;
+      padding: 15px;
+      border-radius: 14px;
+      font-size: 15px;
     }
 
     .btn-primary:hover {
-      background: #002c56;
-    }
-
-    .btn-secondary {
-      background: #0f766e;
-      color: white;
-    }
-
-    .btn-danger {
-      background: #dc2626;
-      color: white;
+      transform: translateY(-1px);
+      opacity: 0.95;
     }
 
     .dashboard {
@@ -124,117 +121,228 @@
     }
 
     .sidebar {
-      width: 260px;
-      background: #003b73;
+      width: 280px;
+      background: linear-gradient(180deg,#064e3b,#166534);
       color: white;
-      padding: 20px;
+      padding: 30px 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
     }
 
-    .sidebar h2 {
+    .sidebar-logo {
+      text-align: center;
       margin-bottom: 30px;
     }
 
+    .sidebar-logo img {
+      width: 180px;
+      background: white;
+      border-radius: 16px;
+      padding: 10px;
+    }
+
+    .menu-title {
+      color: rgba(255,255,255,0.6);
+      font-size: 12px;
+      margin: 20px 0 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
     .menu-item {
-      padding: 12px;
-      border-radius: 10px;
+      padding: 15px;
+      border-radius: 14px;
       margin-bottom: 10px;
       cursor: pointer;
       transition: 0.2s;
+      font-weight: 500;
     }
 
-    .menu-item:hover {
-      background: rgba(255,255,255,0.1);
+    .menu-item:hover,
+    .menu-active {
+      background: rgba(255,255,255,0.12);
+    }
+
+    .user-card {
+      background: rgba(255,255,255,0.08);
+      padding: 18px;
+      border-radius: 18px;
+    }
+
+    .user-card p {
+      font-size: 13px;
+      opacity: 0.8;
+      margin-top: 4px;
     }
 
     .main {
       flex: 1;
-      padding: 30px;
+      padding: 35px;
     }
 
     .topbar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 25px;
+      margin-bottom: 30px;
     }
 
-    .welcome {
-      font-size: 18px;
-      font-weight: bold;
+    .topbar h1 {
+      font-size: 34px;
+      margin-bottom: 8px;
     }
 
-    .grid {
+    .topbar p {
+      color: #64748b;
+    }
+
+    .cards {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
       gap: 20px;
       margin-bottom: 25px;
     }
 
-    .info-card {
+    .card {
       background: white;
-      padding: 20px;
-      border-radius: 16px;
-      box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(15,23,42,0.05);
     }
 
-    .info-card h3 {
+    .card h3 {
+      font-size: 14px;
+      color: #64748b;
       margin-bottom: 10px;
-      color: #003b73;
+    }
+
+    .card strong {
+      font-size: 34px;
+      color: #111827;
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 25px;
+      margin-bottom: 25px;
     }
 
     .section {
       background: white;
+      border-radius: 24px;
       padding: 25px;
-      border-radius: 16px;
-      box-shadow: 0 5px 20px rgba(0,0,0,0.05);
-      margin-bottom: 25px;
+      box-shadow: 0 10px 30px rgba(15,23,42,0.05);
+    }
+
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .section-title h2 {
+      font-size: 24px;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
-    }
-
-    table th,
-    table td {
-      padding: 14px;
-      border-bottom: 1px solid #e5e7eb;
-      text-align: left;
-      font-size: 14px;
     }
 
     table th {
-      background: #f3f4f6;
+      background: #f8fafc;
+      padding: 14px;
+      text-align: left;
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    table td {
+      padding: 16px 14px;
+      border-bottom: 1px solid #edf2f7;
+      font-size: 14px;
     }
 
     .status {
-      padding: 6px 10px;
+      padding: 7px 12px;
       border-radius: 20px;
       font-size: 12px;
-      font-weight: bold;
-      display: inline-block;
+      font-weight: 600;
     }
 
     .aberto {
-      background: #fef3c7;
-      color: #92400e;
+      background: #dbeafe;
+      color: #2563eb;
     }
 
     .andamento {
-      background: #dbeafe;
-      color: #1d4ed8;
+      background: #fef3c7;
+      color: #d97706;
     }
 
     .finalizado {
       background: #dcfce7;
-      color: #166534;
+      color: #15803d;
+    }
+
+    .quick-card {
+      border: 1px solid #edf2f7;
+      border-radius: 18px;
+      padding: 18px;
+      margin-bottom: 15px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .quick-card:hover {
+      border-color: #16a34a;
+    }
+
+    .quick-card strong {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .quick-card span {
+      color: #64748b;
+      font-size: 14px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(3,1fr);
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 20px;
+      gap: 15px;
+    }
+
+    .btn-secondary {
+      background: #e2e8f0;
+      color: #1e293b;
+      padding: 14px 24px;
+      border-radius: 14px;
+    }
+
+    .submit-btn {
+      background: linear-gradient(90deg,#15803d,#16a34a);
+      color: white;
+      padding: 14px 24px;
+      border-radius: 14px;
     }
 
     .message {
       margin-top: 15px;
-      padding: 12px;
-      border-radius: 10px;
+      padding: 14px;
+      border-radius: 14px;
       font-size: 14px;
     }
 
@@ -248,7 +356,14 @@
       color: #991b1b;
     }
 
-    @media (max-width: 900px) {
+    @media(max-width: 1200px) {
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media(max-width: 900px) {
+
       .dashboard {
         flex-direction: column;
       }
@@ -256,502 +371,418 @@
       .sidebar {
         width: 100%;
       }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .main {
+        padding: 20px;
+      }
+
     }
+
   </style>
 </head>
 <body>
 
   <div id="loginScreen" class="login-screen">
-    <div class="card">
+
+    <div class="login-card">
+
       <div class="logo">
-        <h1>CMAA RH</h1>
-        <p>Portal de Chamados RH</p>
+        <img src="CMAA.jpeg" alt="CMAA">
+        <h1>Portal RH</h1>
+        <p>Acesse sua conta corporativa</p>
       </div>
 
       <div class="form-group">
-        <label>Email</label>
-        <input type="email" id="email" placeholder="seuemail@cmaa.com.br" />
+        <label>Email corporativo</label>
+        <input type="email" id="email" placeholder="usuario@cmaa.com.br">
       </div>
 
       <div class="form-group">
         <label>Senha</label>
-        <input type="password" id="password" placeholder="********" />
+        <input type="password" id="password" placeholder="********">
       </div>
 
       <button class="btn-primary" onclick="login()">
         Entrar
       </button>
 
-      <div style="height: 10px"></div>
-
-      <button class="btn-secondary" onclick="register()">
-        Criar Conta
-      </button>
-
       <div id="authMessage"></div>
+
     </div>
+
   </div>
 
   <div id="dashboard" class="dashboard hidden">
 
     <div class="sidebar">
-      <h2>CMAA RH</h2>
 
-      <div class="menu-item" onclick="showSection('homeSection')">
-        Dashboard
+      <div>
+
+        <div class="sidebar-logo">
+          <img src="CMAA.jpeg" alt="CMAA">
+        </div>
+
+        <div class="menu-title">Menu</div>
+
+        <div class="menu-item menu-active">
+          Dashboard
+        </div>
+
+        <div class="menu-item" onclick="scrollToForm()">
+          Novo Chamado
+        </div>
+
+        <div class="menu-item">
+          Meus Chamados
+        </div>
+
+        <div class="menu-item" onclick="logout()">
+          Sair
+        </div>
+
       </div>
 
-      <div class="menu-item" onclick="showSection('newTicketSection')">
-        Novo Chamado
+      <div class="user-card">
+        <strong id="sidebarUser">Usuário</strong>
+        <p id="sidebarEmail">usuario@cmaa.com.br</p>
       </div>
 
-      <div class="menu-item" onclick="showSection('ticketsSection')">
-        Meus Chamados
-      </div>
-
-      <div class="menu-item" onclick="openLogs()">
-        Logs de Acesso
-      </div>
-
-      <div class="menu-item" onclick="logout()">
-        Sair
-      </div>
     </div>
 
     <div class="main">
 
       <div class="topbar">
-        <div class="welcome" id="welcomeText">
-          Bem-vindo
-        </div>
-      </div>
 
-      <div id="homeSection">
-
-        <div class="grid">
-
-          <div class="info-card">
-            <h3>Total de Chamados</h3>
-            <p id="totalChamados">0</p>
-          </div>
-
-          <div class="info-card">
-            <h3>Em Aberto</h3>
-            <p id="abertos">0</p>
-          </div>
-
-          <div class="info-card">
-            <h3>Em Andamento</h3>
-            <p id="andamento">0</p>
-          </div>
-
-          <div class="info-card">
-            <h3>Finalizados</h3>
-            <p id="finalizados">0</p>
-          </div>
-
+        <div>
+          <h1>Olá, Usuário!</h1>
+          <p>Bem-vindo ao Portal de Chamados do RH.</p>
         </div>
 
       </div>
 
-      <div id="newTicketSection" class="section hidden">
-        <h2>Abrir Novo Chamado</h2>
+      <div class="cards">
 
-        <div class="form-group">
-          <label>Tipo de Solicitação</label>
-          <select id="tipo">
-            <option>Férias</option>
-            <option>Ajuste de Ponto</option>
-            <option>Banco de Horas</option>
-            <option>Atualização Documental</option>
-            <option>Informações RH</option>
-            <option>Benefícios</option>
-            <option>Outros</option>
-          </select>
+        <div class="card">
+          <h3>Meus Chamados</h3>
+          <strong id="totalChamados">0</strong>
+        </div>
+
+        <div class="card">
+          <h3>Abertos</h3>
+          <strong id="abertos">0</strong>
+        </div>
+
+        <div class="card">
+          <h3>Em Andamento</h3>
+          <strong id="andamento">0</strong>
+        </div>
+
+        <div class="card">
+          <h3>Finalizados</h3>
+          <strong id="finalizados">0</strong>
+        </div>
+
+      </div>
+
+      <div class="content-grid">
+
+        <div class="section">
+
+          <div class="section-title">
+            <h2>Meus Chamados Recentes</h2>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Tipo</th>
+                <th>Unidade</th>
+                <th>Status</th>
+                <th>Abertura</th>
+              </tr>
+            </thead>
+            <tbody id="ticketsTable"></tbody>
+          </table>
+
+        </div>
+
+        <div class="section">
+
+          <div class="section-title">
+            <h2>Acesso rápido</h2>
+          </div>
+
+          <div class="quick-card" onclick="scrollToForm()">
+            <strong>Novo Chamado</strong>
+            <span>Abrir nova solicitação</span>
+          </div>
+
+          <div class="quick-card">
+            <strong>Meus Chamados</strong>
+            <span>Acompanhar solicitações</span>
+          </div>
+
+          <div class="quick-card">
+            <strong>Contato RH</strong>
+            <span>Fale com o RH</span>
+          </div>
+
+        </div>
+
+      </div>
+
+      <div class="section" id="formSection">
+
+        <div class="section-title">
+          <h2>Novo Chamado</h2>
+        </div>
+
+        <div class="form-grid">
+
+          <div class="form-group">
+            <label>Tipo de Solicitação</label>
+            <select id="tipo">
+              <option>Férias</option>
+              <option>Ajuste de Ponto</option>
+              <option>Banco de Horas</option>
+              <option>Atualização Documental</option>
+              <option>Informações RH</option>
+              <option>Benefícios</option>
+              <option>Outros</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Unidade</label>
+            <select id="unidade">
+              <option>UVT</option>
+              <option>CA</option>
+              <option>UCP</option>
+              <option>UVP</option>
+              <option>PRT</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Prioridade</label>
+            <select id="prioridade">
+              <option>Baixa</option>
+              <option selected>Média</option>
+              <option>Alta</option>
+            </select>
+          </div>
+
         </div>
 
         <div class="form-group">
-          <label>Unidade</label>
-          <input type="text" id="unidade" placeholder="Ex: Uberlândia" />
+          <label>Descrição detalhada</label>
+          <textarea id="descricao" placeholder="Descreva sua solicitação..."></textarea>
         </div>
 
-        <div class="form-group">
-          <label>Descrição</label>
-          <textarea id="descricao" placeholder="Descreva a solicitação..."></textarea>
-        </div>
+        <div class="actions">
+          <button class="btn-secondary">
+            Cancelar
+          </button>
 
-        <button class="btn-primary" onclick="createTicket()">
-          Enviar Chamado
-        </button>
+          <button class="submit-btn" onclick="createTicket()">
+            Enviar Chamado
+          </button>
+        </div>
 
         <div id="ticketMessage"></div>
-      </div>
 
-      <div id="logsSection" class="section hidden">
-        <h2>Logs de Acesso</h2>
-
-        <table>
-          <thead>
-            <tr>
-              <th>Email</th>
-              <th>Ação</th>
-              <th>Data</th>
-            </tr>
-          </thead>
-
-          <tbody id="logsTable"></tbody>
-        </table>
-      </div>
-
-      <div id="ticketsSection" class="section hidden">
-        <h2>Meus Chamados</h2>
-
-        <table>
-          <thead>
-            <tr>
-              <th>Tipo</th>
-              <th>Unidade</th>
-              <th>Status</th>
-              <th>Data</th>
-            </tr>
-          </thead>
-
-          <tbody id="ticketsTable"></tbody>
-        </table>
       </div>
 
     </div>
 
   </div>
 
-  <script>
+<script>
 
-    // ================================
-    // CONFIGURAÇÃO SUPABASE
-    // ================================
+const SUPABASE_URL = 'https://lffdopfncrozebdlvord.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmZmRvcGZuY3JvemViZGx2b3JkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NjA5MTIsImV4cCI6MjA5NTEzNjkxMn0.eRudn0wdM12MyKSFLMOVMeeLhRBZQ-fp0sw958_Y48Q'
 
-    // COLE AQUI SUA URL E SUA ANON KEY
-    // ESSA CHAVE É SEGURA PARA FRONTEND
+const client = supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+)
 
-    const SUPABASE_URL = 'https://lffdopfncrozebdlvord.supabase.co'
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmZmRvcGZuY3JvemViZGx2b3JkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NjA5MTIsImV4cCI6MjA5NTEzNjkxMn0.eRudn0wdM12MyKSFLMOVMeeLhRBZQ-fp0sw958_Y48Q'
+async function login() {
 
-    const client = supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_ANON_KEY
-    )
+  const email = document.getElementById('email').value
+  const password = document.getElementById('password').value
 
-    // ================================
-    // LOGIN
-    // ================================
+  const { data, error } = await client.auth.signInWithPassword({
+    email,
+    password
+  })
 
-    async function registrarLog(usuarioId, email, acao) {
+  if (error) {
+    showAuthMessage(error.message, 'error')
+    return
+  }
 
-      try {
+  loadDashboard(data.user)
+}
 
-        await client
-          .from('logs_acesso')
-          .insert([
-            {
-              usuario_id: usuarioId,
-              email: email,
-              acao: acao
-            }
-          ])
+async function logout() {
+  await client.auth.signOut()
+  location.reload()
+}
 
-      } catch (err) {
-        console.error('Erro ao registrar log:', err)
+async function loadDashboard(user) {
+
+  document.getElementById('loginScreen').classList.add('hidden')
+  document.getElementById('dashboard').classList.remove('hidden')
+
+  document.getElementById('sidebarUser').innerText = user.email.split('@')[0]
+  document.getElementById('sidebarEmail').innerText = user.email
+
+  await loadTickets()
+}
+
+async function createTicket() {
+
+  const {
+    data: { user }
+  } = await client.auth.getUser()
+
+  const tipo = document.getElementById('tipo').value
+  const unidade = document.getElementById('unidade').value
+  const descricao = document.getElementById('descricao').value
+
+  const { error } = await client
+    .from('chamados')
+    .insert([
+      {
+        usuario_id: user.id,
+        email: user.email,
+        tipo,
+        unidade,
+        descricao,
+        status: 'Aberto'
       }
-    }
-
-    async function login() {
-
-      const email = document.getElementById('email').value
-      const password = document.getElementById('password').value
-
-      const { data, error } = await client.auth.signInWithPassword({
-        email,
-        password
-      })
-
-      if (error) {
-        showAuthMessage(error.message, 'error')
-        return
-      }
-
-      await registrarLog(
-        data.user.id,
-        data.user.email,
-        'LOGIN'
-      )
-
-      loadDashboard(data.user)
-    }
-
-    // ================================
-    // REGISTRO
-    // ================================
-
-    async function register() {
-
-      const email = document.getElementById('email').value
-      const password = document.getElementById('password').value
-
-      const { error } = await client.auth.signUp({
-        email,
-        password
-      })
-
-      if (error) {
-        showAuthMessage(error.message, 'error')
-        return
-      }
-
-      showAuthMessage(
-        'Conta criada com sucesso. Verifique seu email.',
-        'success'
-      )
-    }
-
-    // ================================
-    // LOGOUT
-    // ================================
-
-    async function logout() {
-      await client.auth.signOut()
-      location.reload()
-    }
-
-    // ================================
-    // DASHBOARD
-    // ================================
-
-    async function loadDashboard(user) {
-
-      document.getElementById('loginScreen').classList.add('hidden')
-      document.getElementById('dashboard').classList.remove('hidden')
-
-      document.getElementById('welcomeText').innerText =
-        `Bem-vindo, ${user.email}`
-
-      await loadTickets()
-      await loadLogs()
-    }
-
-    // ================================
-    // CRIAR CHAMADO
-    // ================================
-
-    async function createTicket() {
-
-      const {
-        data: { user }
-      } = await client.auth.getUser()
-
-      const tipo = document.getElementById('tipo').value
-      const unidade = document.getElementById('unidade').value
-      const descricao = document.getElementById('descricao').value
-
-      const { error } = await client
-        .from('chamados')
-        .insert([
-          {
-            usuario_id: user.id,
-            email: user.email,
-            tipo,
-            unidade,
-            descricao,
-            status: 'Aberto'
-          }
-        ])
-
-      if (error) {
-        showTicketMessage(error.message, 'error')
-        return
-      }
-
-      await registrarLog(
-        user.id,
-        user.email,
-        'CRIOU CHAMADO'
-      )
-
-      showTicketMessage('Chamado criado com sucesso.', 'success')
-
-      document.getElementById('descricao').value = ''
-      document.getElementById('unidade').value = ''
-
-      await loadTickets()
-    }
-
-    // ================================
-    // LISTAR CHAMADOS
-    // ================================
-
-    async function loadTickets() {
-
-      const {
-        data: { user }
-      } = await client.auth.getUser()
-
-      const { data, error } = await client
-        .from('chamados')
-        .select('*')
-        .eq('usuario_id', user.id)
-        .order('created_at', { ascending: false })
-
-      if (error) {
-        console.error(error)
-        return
-      }
-
-      const table = document.getElementById('ticketsTable')
-      table.innerHTML = ''
-
-      let abertos = 0
-      let andamento = 0
-      let finalizados = 0
-
-      data.forEach(ticket => {
-
-        if (ticket.status === 'Aberto') abertos++
-        if (ticket.status === 'Em andamento') andamento++
-        if (ticket.status === 'Finalizado') finalizados++
-
-        table.innerHTML += `
-          <tr>
-            <td>${ticket.tipo}</td>
-            <td>${ticket.unidade}</td>
-            <td>
-              <span class="status ${getStatusClass(ticket.status)}">
-                ${ticket.status}
-              </span>
-            </td>
-            <td>
-              ${new Date(ticket.created_at).toLocaleDateString('pt-BR')}
-            </td>
-          </tr>
-        `
-      })
-
-      document.getElementById('totalChamados').innerText = data.length
-      document.getElementById('abertos').innerText = abertos
-      document.getElementById('andamento').innerText = andamento
-      document.getElementById('finalizados').innerText = finalizados
-    }
-
-    // ================================
-    // STATUS CSS
-    // ================================
-
-    function getStatusClass(status) {
-
-      if (status === 'Aberto') return 'aberto'
-      if (status === 'Em andamento') return 'andamento'
-      if (status === 'Finalizado') return 'finalizado'
-
-      return 'aberto'
-    }
-
-    // ================================
-    // TROCAR TELAS
-    // ================================
-
-    async function loadLogs() {
-
-      const { data, error } = await client
-        .from('logs_acesso')
-        .select('*')
-        .order('data_acesso', { ascending: false })
-        .limit(50)
-
-      if (error) {
-        console.error(error)
-        return
-      }
-
-      const table = document.getElementById('logsTable')
-      table.innerHTML = ''
-
-      data.forEach(log => {
-
-        table.innerHTML += `
-          <tr>
-            <td>${log.email}</td>
-            <td>${log.acao}</td>
-            <td>
-              ${new Date(log.data_acesso).toLocaleString('pt-BR')}
-            </td>
-          </tr>
-        `
-      })
-    }
-
-    function openLogs() {
-      showSection('logsSection')
-      loadLogs()
-    }
-
-    function showSection(sectionId) {
-
-      const sections = [
-        'homeSection',
-        'newTicketSection',
-        'ticketsSection',
-        'logsSection'
-      ]
-
-      sections.forEach(section => {
-        document.getElementById(section).classList.add('hidden')
-      })
-
-      document.getElementById(sectionId).classList.remove('hidden')
-    }
-
-    // ================================
-    // MENSAGENS
-    // ================================
-
-    function showAuthMessage(message, type) {
-
-      const div = document.getElementById('authMessage')
-
-      div.innerHTML = `
-        <div class="message ${type}">
-          ${message}
-        </div>
-      `
-    }
-
-    function showTicketMessage(message, type) {
-
-      const div = document.getElementById('ticketMessage')
-
-      div.innerHTML = `
-        <div class="message ${type}">
-          ${message}
-        </div>
-      `
-    }
-
-    // ================================
-    // SESSÃO AUTOMÁTICA
-    // ================================
-
-    async function checkUser() {
-
-      const {
-        data: { session }
-      } = await client.auth.getSession()
-
-      if (session?.user) {
-        loadDashboard(session.user)
-      }
-    }
-
-    checkUser()
-
-  </script>
+    ])
+
+  if (error) {
+    showTicketMessage(error.message, 'error')
+    return
+  }
+
+  showTicketMessage('Chamado enviado com sucesso.', 'success')
+
+  document.getElementById('descricao').value = ''
+
+  await loadTickets()
+}
+
+async function loadTickets() {
+
+  const {
+    data: { user }
+  } = await client.auth.getUser()
+
+  const { data, error } = await client
+    .from('chamados')
+    .select('*')
+    .eq('usuario_id', user.id)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error(error)
+    return
+  }
+
+  const table = document.getElementById('ticketsTable')
+  table.innerHTML = ''
+
+  let abertos = 0
+  let andamento = 0
+  let finalizados = 0
+
+  data.forEach(ticket => {
+
+    if (ticket.status === 'Aberto') abertos++
+    if (ticket.status === 'Em andamento') andamento++
+    if (ticket.status === 'Finalizado') finalizados++
+
+    table.innerHTML += `
+      <tr>
+        <td>${ticket.tipo}</td>
+        <td>${ticket.unidade}</td>
+        <td>
+          <span class="status ${getStatusClass(ticket.status)}">
+            ${ticket.status}
+          </span>
+        </td>
+        <td>
+          ${new Date(ticket.created_at).toLocaleDateString('pt-BR')}
+        </td>
+      </tr>
+    `
+  })
+
+  document.getElementById('totalChamados').innerText = data.length
+  document.getElementById('abertos').innerText = abertos
+  document.getElementById('andamento').innerText = andamento
+  document.getElementById('finalizados').innerText = finalizados
+}
+
+function getStatusClass(status) {
+
+  if (status === 'Aberto') return 'aberto'
+  if (status === 'Em andamento') return 'andamento'
+  if (status === 'Finalizado') return 'finalizado'
+
+  return 'aberto'
+}
+
+function showAuthMessage(message, type) {
+
+  const div = document.getElementById('authMessage')
+
+  div.innerHTML = `
+    <div class="message ${type}">
+      ${message}
+    </div>
+  `
+}
+
+function showTicketMessage(message, type) {
+
+  const div = document.getElementById('ticketMessage')
+
+  div.innerHTML = `
+    <div class="message ${type}">
+      ${message}
+    </div>
+  `
+}
+
+function scrollToForm() {
+  document.getElementById('formSection').scrollIntoView({
+    behavior: 'smooth'
+  })
+}
+
+async function checkUser() {
+
+  const {
+    data: { session }
+  } = await client.auth.getSession()
+
+  if (session?.user) {
+    loadDashboard(session.user)
+  }
+}
+
+checkUser()
+
+</script>
 
 </body>
 </html>
