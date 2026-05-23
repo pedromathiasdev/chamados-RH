@@ -545,7 +545,7 @@
 
           <div class="form-group">
             <label>Tipo de Solicitação</label>
-            <select id="tipo">
+            <select id="tipo" onchange="toggleCampos()">
               <option>Férias</option>
               <option>Ajuste de Ponto</option>
               <option>Banco de Horas</option>
@@ -576,6 +576,32 @@
             </select>
           </div>
 
+        </div>
+
+        <div id="campoMatricula" class="form-group">
+          <label>Matrícula do colaborador</label>
+          <input
+            type="text"
+            id="matricula"
+            maxlength="9"
+            minlength="8"
+            required
+            placeholder="Digite a matrícula do colaborador"
+            oninput="this.value = this.value.replace(/\\D/g, '')"
+          >
+          <small>Apenas números • 8 a 9 dígitos</small>
+        </div>
+
+        <div id="campoFerias" class="form-group hidden">
+          <label>Férias em lote</label>
+          <textarea
+            id="feriasLote"
+            placeholder="12345678 - 01/07/2025&#10;123456789 - 15/07/2025"
+          ></textarea>
+          <small>
+            Informe uma linha por colaborador no formato:
+            matrícula - data início
+          </small>
         </div>
 
         <div class="form-group">
@@ -789,7 +815,25 @@ function scrollToForm() {
   })
 }
 
-async function checkUser() {
+async function function toggleCampos() {
+
+  const tipo = document.getElementById('tipo').value
+
+  const campoMatricula = document.getElementById('campoMatricula')
+  const campoFerias = document.getElementById('campoFerias')
+
+  if (tipo === 'Férias') {
+    campoMatricula.classList.add('hidden')
+    campoFerias.classList.remove('hidden')
+  } else {
+    campoMatricula.classList.remove('hidden')
+    campoFerias.classList.add('hidden')
+  }
+}
+
+toggleCampos()
+
+checkUser() {
 
   const {
     data: { session }
