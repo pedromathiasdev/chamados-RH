@@ -763,6 +763,26 @@ function showTicketMessage(message, type) {
   `
 }
 
+function somenteNumeros(input) {
+  input.value = input.value.replace(/\D/g, '')
+}
+
+function toggleCampos() {
+
+  const tipo = document.getElementById('tipo').value
+
+  const campoMatricula = document.getElementById('campoMatricula')
+  const campoFerias = document.getElementById('campoFerias')
+
+  if (tipo === 'Férias') {
+    campoMatricula.classList.add('hidden')
+    campoFerias.classList.remove('hidden')
+  } else {
+    campoMatricula.classList.remove('hidden')
+    campoFerias.classList.add('hidden')
+  }
+}
+
 function scrollToForm() {
   document.getElementById('formSection').scrollIntoView({
     behavior: 'smooth'
