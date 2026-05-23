@@ -578,32 +578,6 @@
 
         </div>
 
-        <div id="campoMatricula" class="form-group">
-          <label>Matrícula do colaborador</label>
-          <input
-            type="text"
-            id="matricula"
-            maxlength="9"
-            minlength="8"
-            required
-            placeholder="Digite a matrícula do colaborador"
-            oninput="this.value = this.value.replace(/\D/g, '')"
-          >
-          <small>Apenas números • 8 a 9 dígitos</small>
-        </div>
-
-        <div id="campoFerias" class="form-group hidden">
-          <label>Férias em lote</label>
-          <textarea
-            id="feriasLote"
-            placeholder="12345678 - 01/07/2025&#10;123456789 - 15/07/2025"
-          ></textarea>
-          <small>
-            Informe uma linha por colaborador no formato:
-            matrícula - data início
-          </small>
-        </div>
-
         <div class="form-group">
           <label>Descrição detalhada</label>
           <textarea id="descricao" placeholder="Descreva sua solicitação..."></textarea>
@@ -681,34 +655,6 @@ async function createTicket() {
   const unidade = document.getElementById('unidade').value
   const descricao = document.getElementById('descricao').value
 
-  const matriculaField = document.getElementById('matricula')
-  const feriasField = document.getElementById('feriasLote')
-
-  const matricula = matriculaField ? matriculaField.value : ''
-  const feriasLote = feriasField ? feriasField.value : ''
-
-  if (tipo !== 'Férias') {
-
-    if (!/^\\d{8,9}$/.test(matricula)) {
-      showTicketMessage(
-        'A matrícula deve conter apenas números e possuir entre 8 e 9 dígitos.',
-        'error'
-      )
-      return
-    }
-  }
-
-  if (tipo === 'Férias') {
-
-    if (!feriasLote.trim()) {
-      showTicketMessage(
-        'Informe as matrículas e datas de início das férias.',
-        'error'
-      )
-      return
-    }
-  }
-
   const { error } = await client
     .from('chamados')
     .insert([
@@ -718,8 +664,6 @@ async function createTicket() {
         tipo,
         unidade,
         descricao,
-        matricula,
-        ferias_lote: feriasLote,
         status: 'Aberto'
       }
     ])
@@ -819,56 +763,13 @@ function showTicketMessage(message, type) {
   `
 }
 
-function somenteNumeros(input) {
-  input.value = input.value.replace(/\D/g, '')
+function scrollToForm() {
+  document.getElementById('formSection').scrollIntoView({
+    behavior: 'smooth'
+  })
 }
 
-function toggleCampos() {
-
-  const tipo = document.getElementById('tipo').value
-
-  const campoMatricula = document.getElementById('campoMatricula')
-  const campoFerias = document.getElementById('campoFerias')
-
-  if (!campoMatricula || !campoFerias) return
-
-  if (tipo === 'Férias') {
-    campoMatricula.classList.add('hidden')
-    campoFerias.classList.remove('hidden')
-  } else {
-    campoMatricula.classList.remove('hidden')
-    campoFerias.classList.add('hidden')
-  }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-
-  const tipo = document.getElementById('tipo')
-
-  if (tipo) {
-    tipo.addEventListener('change', toggleCampos)
-  }
-
-  toggleCampos()
-}) {
-
-  const tipo = document.getElementById('tipo').value
-
-  const campoMatricula = document.getElementById('campoMatricula')
-  const campoFerias = document.getElementById('campoFerias')
-
-  if (tipo === 'Férias') {
-    campoMatricula.classList.add('hidden')
-    campoFerias.classList.remove('hidden')
-  } else {
-    campoMatricula.classList.remove('hidden')
-    campoFerias.classList.add('hidden')
-  }
-}
-
-toggleCampos()
-
-checkUser() {
+async function checkUser() {
 
   const {
     data: { session }
