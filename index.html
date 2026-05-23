@@ -12,7 +12,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
-
     * {
       margin: 0;
       padding: 0;
@@ -313,9 +312,63 @@
 
     .form-grid {
       display: grid;
-      grid-template-columns: repeat(3,1fr);
+      grid-template-columns: repeat(2,1fr);
       gap: 16px;
       margin-bottom: 16px;
+    }
+
+    .ferias-container {
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .ferias-item {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr auto;
+      gap: 12px;
+      align-items: flex-end;
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #edf2f7;
+    }
+
+    .ferias-item:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+
+    .btn-add-ferias {
+      background: #cbd5e1;
+      color: #1e293b;
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      margin-top: 12px;
+    }
+
+    .btn-add-ferias:hover {
+      background: #94a3b8;
+      color: white;
+    }
+
+    .btn-remove-ferias {
+      background: #fee2e2;
+      color: #991b1b;
+      padding: 14px;
+      border-radius: 14px;
+      font-size: 14px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-remove-ferias:hover {
+      background: #fca5a5;
     }
 
     .actions {
@@ -337,6 +390,11 @@
       color: white;
       padding: 14px 24px;
       border-radius: 14px;
+    }
+
+    .btn-primary:hover, .submit-btn:hover {
+      transform: translateY(-1px);
+      opacity: 0.95;
     }
 
     .message {
@@ -363,7 +421,6 @@
     }
 
     @media(max-width: 900px) {
-
       .dashboard {
         flex-direction: column;
       }
@@ -372,24 +429,24 @@
         width: 100%;
       }
 
-      .form-grid {
+      .form-grid, .ferias-item {
         grid-template-columns: 1fr;
+      }
+
+      .btn-remove-ferias {
+        width: 100%;
       }
 
       .main {
         padding: 20px;
       }
-
     }
-
   </style>
 </head>
 <body>
 
   <div id="loginScreen" class="login-screen">
-
     <div class="login-card">
-
       <div class="logo">
         <img src="CMAA.png" alt="CMAA">
         <h1>Portal RH</h1>
@@ -411,17 +468,12 @@
       </button>
 
       <div id="authMessage"></div>
-
     </div>
-
   </div>
 
   <div id="dashboard" class="dashboard hidden">
-
     <div class="sidebar">
-
       <div>
-
         <div class="sidebar-logo">
           <img src="CMAA.png" alt="CMAA">
         </div>
@@ -443,29 +495,23 @@
         <div class="menu-item" onclick="logout()">
           Sair
         </div>
-
       </div>
 
       <div class="user-card">
         <strong id="sidebarUser">Usuário</strong>
         <p id="sidebarEmail">usuario@cmaa.com.br</p>
       </div>
-
     </div>
 
     <div class="main">
-
       <div class="topbar">
-
         <div>
           <h1>Olá, Usuário!</h1>
           <p>Bem-vindo ao Portal de Chamados do RH.</p>
         </div>
-
       </div>
 
       <div class="cards">
-
         <div class="card">
           <h3>Meus Chamados</h3>
           <strong id="totalChamados">0</strong>
@@ -485,13 +531,10 @@
           <h3>Finalizados</h3>
           <strong id="finalizados">0</strong>
         </div>
-
       </div>
 
       <div class="content-grid">
-
         <div class="section">
-
           <div class="section-title">
             <h2>Meus Chamados Recentes</h2>
           </div>
@@ -507,11 +550,9 @@
             </thead>
             <tbody id="ticketsTable"></tbody>
           </table>
-
         </div>
 
         <div class="section">
-
           <div class="section-title">
             <h2>Acesso rápido</h2>
           </div>
@@ -530,32 +571,35 @@
             <strong>Contato RH</strong>
             <span>Fale com o RH</span>
           </div>
-
         </div>
-
       </div>
 
       <div class="section" id="formSection">
-
         <div class="section-title">
           <h2>Novo Chamado</h2>
         </div>
 
         <div class="form-grid">
-
           <div class="form-group">
             <label>Tipo de Solicitação</label>
-            <select id="tipo">
-              <option>Férias</option>
-              <option>Ajuste de Ponto</option>
-              <option>Banco de Horas</option>
-              <option>Atualização Documental</option>
-              <option>Informações RH</option>
-              <option>Benefícios</option>
-              <option>Outros</option>
+            <select id="tipo" onchange="toggleFormFields()">
+              <option value="Férias" selected>Férias (Lançamento em Lote)</option>
+              <option value="Ajuste de Ponto">Ajuste de Ponto</option>
+              <option value="Banco de Horas">Banco de Horas</option>
+              <option value="Atualização Documental">Atualização Documental</option>
+              <option value="Informações RH">Informações RH</option>
+              <option value="Benefícios">Benefícios</option>
+              <option value="Outros">Outros</option>
             </select>
           </div>
 
+          <div id="singleMatriculaContainer" class="form-group hidden">
+            <label>Matrícula do Colaborador *</label>
+            <input type="text" id="matricula" placeholder="Ex: 12345678" pattern="\d{8,9}" title="A matrícula deve conter de 8 a 9 dígitos numéricos.">
+          </div>
+        </div>
+
+        <div class="form-grid">
           <div class="form-group">
             <label>Unidade</label>
             <select id="unidade">
@@ -575,16 +619,37 @@
               <option>Alta</option>
             </select>
           </div>
+        </div>
 
+        <div id="feriasContainer" class="ferias-container">
+          <label style="font-size: 16px; margin-bottom: 15px; color: #111827;">Lista de Colaboradores para Férias *</label>
+          <div id="feriasList">
+            <div class="ferias-item">
+              <div>
+                <label style="font-size: 12px; color: #64748b;">Nome Completo</label>
+                <input type="text" class="colab-nome" placeholder="Nome do colaborador" required>
+              </div>
+              <div>
+                <label style="font-size: 12px; color: #64748b;">Matrícula (8-9 dígitos)</label>
+                <input type="text" class="colab-matricula" placeholder="Ex: 12345678" required>
+              </div>
+              <div>
+                <label style="font-size: 12px; color: #64748b;">Início das Férias</label>
+                <input type="date" class="colab-data" required>
+              </div>
+              <div style="width: 38px;"></div>
+            </div>
+          </div>
+          <button type="button" class="btn-add-ferias" onclick="addColaboradorField()">+ Adicionar Colaborador</button>
         </div>
 
         <div class="form-group">
-          <label>Descrição detalhada</label>
-          <textarea id="descricao" placeholder="Descreva sua solicitação..."></textarea>
+          <label>Descrição detalhada / Observações Gerais</label>
+          <textarea id="descricao" placeholder="Caso necessário, insira observações adicionais sobre o chamado aqui..."></textarea>
         </div>
 
         <div class="actions">
-          <button class="btn-secondary">
+          <button class="btn-secondary" onclick="resetForm()">
             Cancelar
           </button>
 
@@ -594,38 +659,93 @@
         </div>
 
         <div id="ticketMessage"></div>
-
       </div>
-
     </div>
-
   </div>
 
 <script>
-
 const SUPABASE_URL = 'https://lffdopfncrozebdlvord.supabase.co'
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmZmRvcGZuY3JvemViZGx2b3JkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NjA5MTIsImV4cCI6MjA5NTEzNjkxMn0.eRudn0wdM12MyKSFLMOVMeeLhRBZQ-fp0sw958_Y48Q'
 
-const client = supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-)
+const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+// Gerencia a troca de visualização do Formulário baseado no Tipo de Solicitação
+function toggleFormFields() {
+  const tipo = document.getElementById('tipo').value;
+  const feriasContainer = document.getElementById('feriasContainer');
+  const singleMatriculaContainer = document.getElementById('singleMatriculaContainer');
+  
+  if (tipo === 'Férias') {
+    feriasContainer.classList.remove('hidden');
+    singleMatriculaContainer.classList.add('hidden');
+    document.getElementById('matricula').required = false;
+  } else {
+    feriasContainer.classList.add('hidden');
+    singleMatriculaContainer.classList.remove('hidden');
+    document.getElementById('matricula').required = true;
+  }
+}
+
+// Cria uma nova linha para inclusão de outro colaborador no lote de Férias
+function addColaboradorField() {
+  const container = document.getElementById('feriasList');
+  const newItem = document.createElement('div');
+  newItem.className = 'ferias-item';
+  newItem.innerHTML = `
+    <div>
+      <label style="font-size: 12px; color: #64748b;">Nome Completo</label>
+      <input type="text" class="colab-nome" placeholder="Nome do colaborador" required>
+    </div>
+    <div>
+      <label style="font-size: 12px; color: #64748b;">Matrícula (8-9 dígitos)</label>
+      <input type="text" class="colab-matricula" placeholder="Ex: 12345678" required>
+    </div>
+    <div>
+      <label style="font-size: 12px; color: #64748b;">Início das Férias</label>
+      <input type="date" class="colab-data" required>
+    </div>
+    <button type="button" class="btn-remove-ferias" onclick="this.parentElement.remove()">X</button>
+  `;
+  container.appendChild(newItem);
+}
+
+// Reseta o formulário por completo
+function resetForm() {
+  document.getElementById('matricula').value = '';
+  document.getElementById('tipo').value = 'Férias';
+  document.getElementById('unidade').selectedIndex = 0;
+  document.getElementById('prioridade').value = 'Média';
+  document.getElementById('descricao').value = '';
+  document.getElementById('feriasList').innerHTML = `
+    <div class="ferias-item">
+      <div>
+        <label style="font-size: 12px; color: #64748b;">Nome Completo</label>
+        <input type="text" class="colab-nome" placeholder="Nome do colaborador" required>
+      </div>
+      <div>
+        <label style="font-size: 12px; color: #64748b;">Matrícula (8-9 dígitos)</label>
+        <input type="text" class="colab-matricula" placeholder="Ex: 12345678" required>
+      </div>
+      <div>
+        <label style="font-size: 12px; color: #64748b;">Início das Férias</label>
+        <input type="date" class="colab-data" required>
+      </div>
+      <div style="width: 38px;"></div>
+    </div>
+  `;
+  toggleFormFields();
+}
 
 async function login() {
-
   const email = document.getElementById('email').value
   const password = document.getElementById('password').value
 
-  const { data, error } = await client.auth.signInWithPassword({
-    email,
-    password
-  })
+  const { data, error } = await client.auth.signInWithPassword({ email, password })
 
   if (error) {
     showAuthMessage(error.message, 'error')
     return
   }
-
   loadDashboard(data.user)
 }
 
@@ -635,26 +755,81 @@ async function logout() {
 }
 
 async function loadDashboard(user) {
-
   document.getElementById('loginScreen').classList.add('hidden')
   document.getElementById('dashboard').classList.remove('hidden')
 
   document.getElementById('sidebarUser').innerText = user.email.split('@')[0]
   document.getElementById('sidebarEmail').innerText = user.email
 
+  toggleFormFields();
   await loadTickets()
 }
 
 async function createTicket() {
-
-  const {
-    data: { user }
-  } = await client.auth.getUser()
+  const { data: { user } } = await client.auth.getUser()
 
   const tipo = document.getElementById('tipo').value
   const unidade = document.getElementById('unidade').value
-  const descricao = document.getElementById('descricao').value
+  let obsGerais = document.getElementById('descricao').value
+  
+  let payloadDescricao = "";
+  const matriculaRegex = /^\d{8,9}$/;
 
+  // VALIDAÇÃO E COLETA SE FOR CATEGORIA FÉRIAS
+  if (tipo === 'Férias') {
+    const nomes = document.querySelectorAll('.colab-nome');
+    const matriculas = document.querySelectorAll('.colab-matricula');
+    const datas = document.querySelectorAll('.colab-data');
+    
+    let listaColaboradoresText = [];
+    let valid = true;
+    let validMatricula = true;
+
+    for (let i = 0; i < nomes.length; i++) {
+      const nomeVal = nomes[i].value.trim();
+      const matrVal = matriculas[i].value.trim();
+      const dataVal = datas[i].value;
+
+      if (!nomeVal || !matrVal || !dataVal) {
+        valid = false;
+        break;
+      }
+
+      if (!matriculaRegex.test(matrVal)) {
+        validMatricula = false;
+        break;
+      }
+
+      const dataBR = new Date(dataVal + 'T00:00:00').toLocaleDateString('pt-BR');
+      listaColaboradoresText.push(`• Colaborador ${i+1}: ${nomeVal} | Matrícula: ${matrVal} | Início das Férias: ${dataBR}`);
+    }
+
+    if (!valid) {
+      showTicketMessage('Por favor, preencha todos os campos (Nome, Matrícula e Data) de todos os colaboradores incluídos.', 'error');
+      return;
+    }
+
+    if (!validMatricula) {
+      showTicketMessage('Certifique-se de que todas as matrículas adicionadas possuem estritamente entre 8 e 9 dígitos numéricos.', 'error');
+      return;
+    }
+
+    payloadDescricao = `[LANÇAMENTO EM LOTE - FÉRIAS]\n${listaColaboradoresText.join('\n')}`;
+    if(obsGerais) payloadDescricao += `\n\n[Observações Gerais]: ${obsGerais}`;
+
+  } else {
+    // VALIDAÇÃO PARA OUTROS TIPOS DE CHAMADOS (INDIVIDUAL)
+    const matriculaIndividual = document.getElementById('matricula').value.trim();
+    
+    if (!matriculaRegex.test(matriculaIndividual)) {
+      showTicketMessage('A matrícula é obrigatória e deve conter estritamente de 8 a 9 dígitos numéricos.', 'error');
+      return;
+    }
+    
+    payloadDescricao = `[Matrícula: ${matriculaIndividual}] ${obsGerais}`;
+  }
+
+  // Envio ao banco do Supabase
   const { error } = await client
     .from('chamados')
     .insert([
@@ -663,7 +838,7 @@ async function createTicket() {
         email: user.email,
         tipo,
         unidade,
-        descricao,
+        descricao: payloadDescricao,
         status: 'Aberto'
       }
     ])
@@ -673,18 +848,13 @@ async function createTicket() {
     return
   }
 
-  showTicketMessage('Chamado enviado com sucesso.', 'success')
-
-  document.getElementById('descricao').value = ''
-
+  showTicketMessage('Chamado em lote enviado com sucesso para o RH.', 'success')
+  resetForm();
   await loadTickets()
 }
 
 async function loadTickets() {
-
-  const {
-    data: { user }
-  } = await client.auth.getUser()
+  const { data: { user } } = await client.auth.getUser()
 
   const { data, error } = await client
     .from('chamados')
@@ -705,7 +875,6 @@ async function loadTickets() {
   let finalizados = 0
 
   data.forEach(ticket => {
-
     if (ticket.status === 'Aberto') abertos++
     if (ticket.status === 'Em andamento') andamento++
     if (ticket.status === 'Finalizado') finalizados++
@@ -733,55 +902,37 @@ async function loadTickets() {
 }
 
 function getStatusClass(status) {
-
   if (status === 'Aberto') return 'aberto'
   if (status === 'Em andamento') return 'andamento'
   if (status === 'Finalizado') return 'finalizado'
-
   return 'aberto'
 }
 
 function showAuthMessage(message, type) {
-
   const div = document.getElementById('authMessage')
-
-  div.innerHTML = `
-    <div class="message ${type}">
-      ${message}
-    </div>
-  `
+  div.innerHTML = `<div class="message ${type}">${message}</div>`
 }
 
 function showTicketMessage(message, type) {
-
   const div = document.getElementById('ticketMessage')
-
-  div.innerHTML = `
-    <div class="message ${type}">
-      ${message}
-    </div>
-  `
+  div.innerHTML = `<div class="message ${type}">${message}</div>`
+  if(type === 'success') {
+    setTimeout(() => { div.innerHTML = '' }, 5000);
+  }
 }
 
 function scrollToForm() {
-  document.getElementById('formSection').scrollIntoView({
-    behavior: 'smooth'
-  })
+  document.getElementById('formSection').scrollIntoView({ behavior: 'smooth' })
 }
 
 async function checkUser() {
-
-  const {
-    data: { session }
-  } = await client.auth.getSession()
-
+  const { data: { session } } = await client.auth.getSession()
   if (session?.user) {
     loadDashboard(session.user)
   }
 }
 
 checkUser()
-
 </script>
 
 </body>
