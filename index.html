@@ -544,8 +544,8 @@
         <div class="form-grid">
 
           <div class="form-group">
-            <label>Categoria</label>
-            <select id="tipo" onchange="toggleVacationFields()">
+            <label>Tipo de Solicitação</label>
+            <select id="tipo">
               <option>Férias</option>
               <option>Ajuste de Ponto</option>
               <option>Banco de Horas</option>
@@ -555,8 +555,6 @@
               <option>Outros</option>
             </select>
           </div>
-
-          
 
           <div class="form-group">
             <label>Unidade</label>
@@ -576,38 +574,6 @@
               <option selected>Média</option>
               <option>Alta</option>
             </select>
-          </div>
-
-        </div>
-
-        <div id="defaultFields">
-
-        <div class="form-group">
-          <label>Matrícula do colaborador</label>
-          <input
-            type="text"
-            id="matricula"
-            maxlength="9"
-            minlength="8"
-            inputmode="numeric"
-            placeholder="Digite a matrícula com 8 ou 9 dígitos"com 8 ou 9 dígitos"
-            oninput="onlyNumbers(this)"
-          Apenas números (mínimo 8 e máximo 9 dígitos)e máximo 9 dígitos)</small>
-        </div>
-
-        </div>
-
-        <div id="vacationFields" class="hidden">
-
-          <div class="form-group">
-            <label>Solicitação de férias em lote</label>
-            <textarea
-              id="vacationBatch"
-        12345678 - 01/07/2026&#10;123456789 - 15/07/20260;123456789 - 15/07/2026"
-            ></textarea>
-            <small>
-              Uma linha por colaborador contendo matrícula e data.
-            </small>
           </div>
 
         </div>
@@ -638,11 +604,9 @@
 <script>
 
 const SUPABASE_URL = 'https://lffdopfncrozebdlvord.supabase.co'
-const SUPABASE_ANON_KEY = 'Cif (typeof supabase === 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmZmRvcGZuY3JvemViZGx2b3JkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NjA5MTIsImV4cCI6MjA5NTEzNjkxMn0.eRudn0wdM12MyKSFLMOVMeeLhRBZQ-fp0sw958_Y48Q') {
-  alert('Erro ao carregar o Supabase SDK. Verifique sua conexão.')
-}
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmZmRvcGZuY3JvemViZGx2b3JkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NjA5MTIsImV4cCI6MjA5NTEzNjkxMn0.eRudn0wdM12MyKSFLMOVMeeLhRBZQ-fp0sw958_Y48Q'
 
-const client = supabase.createClient(= supabase.createClient(
+const client = supabase.createClient(
   SUPABASE_URL,
   SUPABASE_ANON_KEY
 )
@@ -690,45 +654,6 @@ async function createTicket() {
   const tipo = document.getElementById('tipo').value
   const unidade = document.getElementById('unidade').value
   const descricao = document.getElementById('descricao').value
-  const matricula = document.getElementById('matricula')?.value || ''
-  const vacationBatch = document.getElementById('vacationBatch')?.value || ''
-
-  if (tipo !==^\\d{8,9}$) {
-
-    if (!/^\\d{8,9}$/.test(matricula)) {
-      shoA matrícula deve conter entre 8 e 9 números.nter entre 8 e 9 números.',
-        'error'
-      )
-      return
-    }
-  }
-
-  if (tipo === 'Férias') {
-
-    if (!vacationBatch.trim()) {
-      showTicketMessage(
-        'Informe os colaboradores para solicitação de férias.',
-        'error'
-      )
-      return
-    }
-
-    const linhas = vacationBatch
-      .split('\n')
-      .map(l => l.trim())
-      .filter(l => l)
-
-    for (const linha of linhas)^\\d{8,9}\\s*-\\s*\\d{2}\\/\\d{2}\\/\\d{4}$\s*-\\s*\\d{2}\\//
-
-      if (!regex.test(linha)) {
-        showTicketMessage(
-          'Linha inválida: ' + linha,
-          'error'
-        )
-        return
-      }
-    }
-  }
 
   const { error } = await client
     .from('chamados')
@@ -739,8 +664,6 @@ async function createTicket() {
         tipo,
         unidade,
         descricao,
-        matricula,
-        ferias_lote: vacationBatch,
         status: 'Aberto'
       }
     ])
@@ -753,8 +676,6 @@ async function createTicket() {
   showTicketMessage('Chamado enviado com sucesso.', 'success')
 
   document.getElementById('descricao').value = ''
-  document.getElementById('matricula').value = ''
-  document.getElementById('vacationBatch').value = ''
 
   await loadTickets()
 }
@@ -840,26 +761,6 @@ function showTicketMessage(message, type) {
       ${message}
     </div>
   `
-}
-
-function onlyNumbers(input) {
-  input.value = input.value.replace(/\D/g, '')
-}
-
-function toggleVacationFields() {
-
-  const tipo = document.getElementById('tipo').value
-
-  const defaultFields = document.getElementById('defaultFields')
-  const vacationFields = document.getElementById('vacationFields')
-
-  if (tipo === 'Férias') {
-    defaultFields.classList.add('hidden')
-    vacationFields.classList.remove('hidden')
-  } else {
-    defaultFields.classList.remove('hidden')
-    vacationFields.classList.add('hidden')
-  }
 }
 
 function scrollToForm() {
