@@ -309,6 +309,10 @@
         Meus Chamados
       </div>
 
+      <div class="menu-item" onclick="openLogs()">
+        Logs de Acesso
+      </div>
+
       <div class="menu-item" onclick="logout()">
         Sair
       </div>
@@ -383,6 +387,22 @@
         <div id="ticketMessage"></div>
       </div>
 
+      <div id="logsSection" class="section hidden">
+        <h2>Logs de Acesso</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Ação</th>
+              <th>Data</th>
+            </tr>
+          </thead>
+
+          <tbody id="logsTable"></tbody>
+        </table>
+      </div>
+
       <div id="ticketsSection" class="section hidden">
         <h2>Meus Chamados</h2>
 
@@ -425,6 +445,25 @@
     // LOGIN
     // ================================
 
+    async function registrarLog(usuarioId, email, acao) {
+
+      try {
+
+        await client
+          .from('logs_acesso')
+          .insert([
+            {
+              usuario_id: usuarioId,
+              email: email,
+              acao: acao
+            }
+          ])
+
+      } catch (err) {
+        console.error('Erro ao registrar log:', err)
+      }
+    }
+
     async function login() {
 
       const email = document.getElementById('email').value
@@ -439,6 +478,12 @@
         showAuthMessage(error.message, 'error')
         return
       }
+
+      await registrarLog(
+        data.user.id,
+        data.user.email,
+        'LOGIN'
+      )
 
       loadDashboard(data.user)
     }
@@ -490,6 +535,7 @@
         `Bem-vindo, ${user.email}`
 
       await loadTickets()
+      await loadLogs()
     }
 
     // ================================
@@ -523,6 +569,12 @@
         showTicketMessage(error.message, 'error')
         return
       }
+
+      await registrarLog(
+        user.id,
+        user.email,
+        'CRIOU CHAMADO'
+      )
 
       showTicketMessage('Chamado criado com sucesso.', 'success')
 
@@ -605,12 +657,48 @@
     // TROCAR TELAS
     // ================================
 
+    async function loadLogs() {
+
+      const { data, error } = await client
+        .from('logs_acesso')
+        .select('*')
+        .order('data_acesso', { ascending: false })
+        .limit(50)
+
+      if (error) {
+        console.error(error)
+        return
+      }
+
+      const table = document.getElementById('logsTable')
+      table.innerHTML = ''
+
+      data.forEach(log => {
+
+        table.innerHTML += `
+          <tr>
+            <td>${log.email}</td>
+            <td>${log.acao}</td>
+            <td>
+              ${new Date(log.data_acesso).toLocaleString('pt-BR')}
+            </td>
+          </tr>
+        `
+      })
+    }
+
+    function openLogs() {
+      showSection('logsSection')
+      loadLogs()
+    }
+
     function showSection(sectionId) {
 
       const sections = [
         'homeSection',
         'newTicketSection',
-        'ticketsSection'
+        'ticketsSection',
+        'logsSection'
       ]
 
       sections.forEach(section => {
