@@ -480,7 +480,7 @@
 
         <div class="menu-title">Menu</div>
 
-        <div class="menu-item menu-active">
+        <div class="menu-item menu-active" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
           Dashboard
         </div>
 
@@ -488,7 +488,7 @@
           Novo Chamado
         </div>
 
-        <div class="menu-item">
+        <div class="menu-item" onclick="window.scrollTo({top: document.getElementById('formSection').offsetTop - 50, behavior: 'smooth'})">
           Meus Chamados
         </div>
 
@@ -506,7 +506,7 @@
     <div class="main">
       <div class="topbar">
         <div>
-          <h1>Olá, Usuário!</h1>
+          <h1 id="welcomeUser">Olá, Usuário!</h1>
           <p>Bem-vindo ao Portal de Chamados do RH.</p>
         </div>
       </div>
@@ -562,7 +562,7 @@
             <span>Abrir nova solicitação</span>
           </div>
 
-          <div class="quick-card">
+          <div class="quick-card" onclick="scrollToForm()">
             <strong>Meus Chamados</strong>
             <span>Acompanhar solicitações</span>
           </div>
@@ -669,7 +669,41 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
-// Gerencia a troca de visualização do Formulário baseado no Tipo de Solicitação
+// Ouvinte global de autenticação para gerenciar sessões ativas automaticamente
+client.auth.onAuthStateChange((event, session) => {
+  if (session && session.user) {
+    loadDashboard(session.user);
+  } else {
+    document.getElementById('loginScreen').classList.remove('hidden');
+    document.getElementById('dashboard').classList.add('hidden');
+  }
+});
+
+function getStatusClass(status) {
+  if (!status) return 'aberto';
+  const s = status.toLowerCase();
+  if (s.includes('andamento')) return 'andamento';
+  if (s.includes('finalizado')) return 'finalizado';
+  return 'aberto';
+}
+
+function showAuthMessage(msg, type) {
+  const container = document.getElementById('authMessage');
+  container.className = `message ${type}`;
+  container.innerText = msg;
+}
+
+function showTicketMessage(msg, type) {
+  const container = document.getElementById('ticketMessage');
+  container.className = `message ${type}`;
+  container.innerText = msg;
+  setTimeout(() => { container.className = ''; container.innerText = ''; }, 5000);
+}
+
+function scrollToForm() {
+  document.getElementById('formSection').scrollIntoView({ behavior: 'smooth' });
+}
+
 function toggleFormFields() {
   const tipo = document.getElementById('tipo').value;
   const feriasContainer = document.getElementById('feriasContainer');
@@ -686,7 +720,6 @@ function toggleFormFields() {
   }
 }
 
-// Cria uma nova linha para inclusão de outro colaborador no lote de Férias
 function addColaboradorField() {
   const container = document.getElementById('feriasList');
   const newItem = document.createElement('div');
@@ -709,13 +742,11 @@ function addColaboradorField() {
   container.appendChild(newItem);
 }
 
-// Função auxiliar para validar se um número de matrícula está dentro das regras estabelecidas
 function validarRegraMatricula(valor) {
   const numero = parseInt(valor, 10);
   return !isNaN(numero) && numero >= 800000 && numero <= 9999999;
 }
 
-// Reseta o formulário por completo
 function resetForm() {
   document.getElementById('matricula').value = '';
   document.getElementById('tipo').value = 'Férias';
@@ -752,50 +783,48 @@ async function login() {
     showAuthMessage(error.message, 'error')
     return
   }
-  loadDashboard(data.user)
+  showAuthMessage('', '')
 }
 
 async function logout() {
   await client.auth.signOut()
-  location.reload()
 }
 
 async function loadDashboard(user) {
   document.getElementById('loginScreen').classList.add('hidden')
   document.getElementById('dashboard').classList.remove('hidden')
 
-  document.getElementById('sidebarUser').innerText = user.email.split('@')[0]
+  const username = user.email.split('@')[0];
+  document.getElementById('sidebarUser').innerText = username
   document.getElementById('sidebarEmail').innerText = user.email
+  document.getElementById('welcomeUser').innerText = `Olá, ${username.charAt(0).toUpperCase() + username.slice(1)}!`
 
   toggleFormFields();
-  await loadTickets()
+  await loadTickets(user)
 }
 
-async function loadTickets() {
+async function loadTickets(authenticatedUser) {
+  let currentUser = authenticatedUser;
 
-  const { data: { user }, error: userError } = await client.auth.getUser()
-
-  if (userError || !user) {
-    console.error('Usuário não encontrado')
-    return
+  if (!currentUser) {
+    const { data: { user }, error: userError } = await client.auth.getUser()
+    if (userError || !user) {
+      console.error('Usuário não encontrado ou não autenticado.')
+      return
+    }
+    currentUser = user;
   }
 
-  // ============================================
-  // BUSCA CHAMADOS DO USUÁRIO
-  // ============================================
-
+  // Busca e isola os chamados estritamente criados por este usuário autenticado
   const { data, error } = await client
     .from('chamados')
     .select('*')
-    .or(`usuario_id.eq.${user.id},email.eq.${user.email}`)
+    .or(`usuario_id.eq.${currentUser.id},email.eq.${currentUser.email}`)
     .order('created_at', { ascending: false })
 
   if (error) {
     console.error(error)
-    showTicketMessage(
-      'Erro ao carregar chamados.',
-      'error'
-    )
+    showTicketMessage('Erro ao carregar chamados.', 'error')
     return
   }
 
@@ -806,12 +835,7 @@ async function loadTickets() {
   let andamento = 0
   let finalizados = 0
 
-  // ============================================
-  // SEM CHAMADOS
-  // ============================================
-
   if (!data || data.length === 0) {
-
     table.innerHTML = `
       <tr>
         <td colspan="4" style="text-align:center; padding:30px;">
@@ -819,51 +843,34 @@ async function loadTickets() {
         </td>
       </tr>
     `
-
     document.getElementById('totalChamados').innerText = 0
     document.getElementById('abertos').innerText = 0
     document.getElementById('andamento').innerText = 0
     document.getElementById('finalizados').innerText = 0
-
     return
   }
 
-  // ============================================
-  // PREENCHE TABELA
-  // ============================================
-
   data.forEach(ticket => {
-
-    if (ticket.status === 'Aberto') abertos++
-    if (ticket.status === 'Em andamento') andamento++
-    if (ticket.status === 'Finalizado') finalizados++
+    const statusAtual = ticket.status || 'Aberto';
+    if (statusAtual === 'Aberto') abertos++
+    if (statusAtual === 'Em andamento') andamento++
+    if (statusAtual === 'Finalizado') finalizados++
 
     table.innerHTML += `
       <tr>
         <td>${ticket.tipo || '-'}</td>
-
         <td>${ticket.unidade || '-'}</td>
-
         <td>
-          <span class="status ${getStatusClass(ticket.status)}">
-            ${ticket.status || 'Aberto'}
+          <span class="status ${getStatusClass(statusAtual)}">
+            ${statusAtual}
           </span>
         </td>
-
         <td>
-          ${
-            ticket.created_at
-              ? new Date(ticket.created_at).toLocaleDateString('pt-BR')
-              : '-'
-          }
+          ${ticket.created_at ? new Date(ticket.created_at).toLocaleDateString('pt-BR') : '-'}
         </td>
       </tr>
     `
   })
-
-  // ============================================
-  // CARDS DASHBOARD
-  // ============================================
 
   document.getElementById('totalChamados').innerText = data.length
   document.getElementById('abertos').innerText = abertos
@@ -872,9 +879,7 @@ async function loadTickets() {
 }
 
 async function createTicket() {
-
   try {
-
     const { data: { user }, error: userError } = await client.auth.getUser()
 
     if (userError || !user) {
@@ -889,133 +894,80 @@ async function createTicket() {
 
     let chamados = []
 
-    // ============================================
-    // FÉRIAS
-    // ============================================
-
     if (tipo === 'Férias') {
-
       const nomes = document.querySelectorAll('.colab-nome')
       const matriculas = document.querySelectorAll('.colab-matricula')
       const datas = document.querySelectorAll('.colab-data')
 
       for (let i = 0; i < nomes.length; i++) {
-
         const nome = nomes[i].value.trim()
         const matricula = matriculas[i].value.trim()
         const dataFerias = datas[i].value
 
         if (!nome || !matricula || !dataFerias) {
-          showTicketMessage(
-            `Preencha todos os dados do colaborador ${i + 1}.`,
-            'error'
-          )
+          showTicketMessage(`Preencha todos os dados do colaborador ${i + 1}.`, 'error')
           return
         }
 
         if (!validarRegraMatricula(matricula)) {
-          showTicketMessage(
-            `Matrícula inválida no colaborador ${i + 1}.`,
-            'error'
-          )
+          showTicketMessage(`Matrícula inválida no colaborador ${i + 1}.`, 'error')
           return
         }
 
         chamados.push({
           usuario_id: user.id,
           email: user.email,
-
           tipo: tipo,
           unidade: unidade,
           prioridade: prioridade,
-
           nome_colaborador: nome,
           matricula: matricula,
           data_ferias: dataFerias,
-
           descricao: descricao,
           status: 'Aberto'
         })
       }
-
     } else {
-
-      // ============================================
-      // OUTROS TIPOS
-      // ============================================
-
       const matricula = document.getElementById('matricula').value.trim()
 
       if (!validarRegraMatricula(matricula)) {
-        showTicketMessage(
-          'A matrícula deve estar entre 800000 e 9999999.',
-          'error'
-        )
+        showTicketMessage('A matrícula deve estar entre 800000 e 9999999.', 'error')
         return
       }
 
       chamados.push({
         usuario_id: user.id,
         email: user.email,
-
         tipo: tipo,
         unidade: unidade,
         prioridade: prioridade,
-
         matricula: matricula,
-
         nome_colaborador: null,
         data_ferias: null,
-
         descricao: descricao,
         status: 'Aberto'
       })
     }
-
-    // ============================================
-    // INSERT SUPABASE
-    // ============================================
 
     const { error } = await client
       .from('chamados')
       .insert(chamados)
 
     if (error) {
-
       console.error(error)
-
-      showTicketMessage(
-        'Erro ao salvar chamado: ' + error.message,
-        'error'
-      )
-
+      showTicketMessage('Erro ao salvar chamado: ' + error.message, 'error')
       return
     }
 
-    // ============================================
-    // SUCESSO
-    // ============================================
-
-    showTicketMessage(
-      `${chamados.length} chamado(s) aberto(s) com sucesso.`,
-      'success'
-    )
-
+    showTicketMessage(`${chamados.length} chamado(s) aberto(s) com sucesso.`, 'success')
     resetForm()
-
-    await loadTickets()
+    await loadTickets(user)
 
   } catch (err) {
-
     console.error(err)
-
-    showTicketMessage(
-      'Erro inesperado ao abrir chamado.',
-      'error'
-    )
+    showTicketMessage('Erro inesperado ao abrir chamado.', 'error')
   }
 }
-
 </script>
 </body>
 </html>
