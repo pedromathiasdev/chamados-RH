@@ -771,173 +771,199 @@ async function loadDashboard(user) {
   await loadTickets()
 }
 
+<script>
+
 async function createTicket() {
-  const { data: { user } } = await client.auth.getUser()
 
-  const tipo = document.getElementById('tipo').value
-  const unidade = document.getElementById('unidade').value
-  let obsGerais = document.getElementById('descricao').value
-  
-  let payloadDescricao = "";
+  try {
 
-  // VALIDAÇÃO E COLETA SE FOR CATEGORIA FÉRIAS
-  if (tipo === 'Férias') {
-    const nomes = document.querySelectorAll('.colab-nome');
-    const matriculas = document.querySelectorAll('.colab-matricula');
-    const datas = document.querySelectorAll('.colab-data');
-    
-    let listaColaboradoresText = [];
-    let valid = true;
-    let validMatricula = true;
+    const { data: authData, error: authError } =
+      await client.auth.getUser();
 
-    for (let i = 0; i < nomes.length; i++) {
-      const nomeVal = nomes[i].value.trim();
-      const matrVal = matriculas[i].value.trim();
-      const dataVal = datas[i].value;
+    if (authError || !authData.user) {
 
-      if (!nomeVal || !matrVal || !dataVal) {
-        valid = false;
-        break;
+      showTicketMessage(
+        'Usuário não autenticado.',
+        'error'
+      );
+
+      return;
+    }
+
+    const user = authData.user;
+
+    const tipo =
+      document.getElementById('tipo').value;
+
+    const unidade =
+      document.getElementById('unidade').value;
+
+    const prioridade =
+      document.getElementById('prioridade').value;
+
+    const descricaoGeral =
+      document.getElementById('descricao').value;
+
+    let chamados = [];
+
+    // ==========================
+    // FÉRIAS
+    // ==========================
+
+    if (tipo === 'Férias') {
+
+      const nomes =
+        document.querySelectorAll('.colab-nome');
+
+      const matriculas =
+        document.querySelectorAll('.colab-matricula');
+
+      const datas =
+        document.querySelectorAll('.colab-data');
+
+      for (let i = 0; i < nomes.length; i++) {
+
+        const nome =
+          nomes[i].value.trim();
+
+        const matricula =
+          matriculas[i].value.trim();
+
+        const dataFerias =
+          datas[i].value;
+
+        if (!nome || !matricula || !dataFerias) {
+
+          showTicketMessage(
+            `Preencha todos os campos do colaborador ${i + 1}.`,
+            'error'
+          );
+
+          return;
+        }
+
+        if (!validarRegraMatricula(matricula)) {
+
+          showTicketMessage(
+            `Matrícula inválida no colaborador ${i + 1}.`,
+            'error'
+          );
+
+          return;
+        }
+
+        const descricaoCompleta = `
+Nome: ${nome}
+Matrícula: ${matricula}
+Data Férias: ${dataFerias}
+
+Observações:
+${descricaoGeral}
+        `;
+
+        chamados.push({
+
+          usuario_id: user.id,
+          email: user.email,
+
+          tipo: tipo,
+          unidade: unidade,
+          descricao: descricaoCompleta,
+
+          status: 'Aberto'
+
+        });
       }
 
-      if (!validRegraMatricula(matrVal)) {
-        validMatricula = false;
-        break;
+    } else {
+
+      // ==========================
+      // OUTROS TIPOS
+      // ==========================
+
+      const matricula =
+        document.getElementById('matricula').value.trim();
+
+      if (!validarRegraMatricula(matricula)) {
+
+        showTicketMessage(
+          'A matrícula deve estar entre 800000 e 9999999.',
+          'error'
+        );
+
+        return;
       }
 
-      const dataBR = new Date(dataVal + 'T00:00:00').toLocaleDateString('pt-BR');
-      listaColaboradoresText.push(`• Colaborador ${i+1}: ${nomeVal} | Matrícula: ${matrVal} | Início das Férias: ${dataBR}`);
-    }
+      const descricaoCompleta = `
+Matrícula: ${matricula}
 
-    if (!valid) {
-      showTicketMessage('Por favor, preencha todos os campos (Nome, Matrícula e Data) de todos os colaboradores incluídos.', 'error');
-      return;
-    }
+Prioridade:
+${prioridade}
 
-    if (!validMatricula) {
-      showTicketMessage('Erro: Existem matrículas fora do intervalo permitido (de 800000 a 9999999).', 'error');
-      return;
-    }
+Descrição:
+${descricaoGeral}
+      `;
 
-    payloadDescricao = `[LANÇAMENTO EM LOTE - FÉRIAS]\n${listaColaboradoresText.join('\n')}`;
-    if(obsGerais) payloadDescricao += `\n\n[Observações Gerais]: ${obsGerais}`;
+      chamados.push({
 
-  } else {
-    // VALIDAÇÃO PARA OUTROS TIPOS DE CHAMADOS (INDIVIDUAL)
-    const matriculaIndividual = document.getElementById('matricula').value.trim();
-    
-    if (!validRegraMatricula(matriculaIndividual)) {
-      showTicketMessage('A matrícula é obrigatória e deve ser um número entre 800000 e 9999999.', 'error');
-      return;
-    }
-    
-    payloadDescricao = `[Matrícula: ${matriculaIndividual}] ${obsGerais}`;
-  }
-
-  // Envio ao banco do Supabase
-  const { error } = await client
-    .from('chamados')
-    .insert([
-      {
         usuario_id: user.id,
         email: user.email,
-        tipo,
-        unidade,
-        descricao: payloadDescricao,
+
+        tipo: tipo,
+        unidade: unidade,
+        descricao: descricaoCompleta,
+
         status: 'Aberto'
-      }
-    ])
 
-  if (error) {
-    showTicketMessage(error.message, 'error')
-    return
-  }
+      });
 
-  showTicketMessage('Chamado em lote enviado com sucesso para o RH.', 'success')
-  resetForm();
-  await loadTickets()
-}
+    }
 
-async function loadTickets() {
-  const { data: { user } } = await client.auth.getUser()
+    // ==========================
+    // SALVA NO SUPABASE
+    // ==========================
 
-  const { data, error } = await client
-    .from('chamados')
-    .select('*')
-    .eq('usuario_id', user.id)
-    .order('created_at', { ascending: false })
+    const { error } =
+      await client
+        .from('chamados')
+        .insert(chamados);
 
-  if (error) {
-    console.error(error)
-    return
-  }
+    if (error) {
 
-  const table = document.getElementById('ticketsTable')
-  table.innerHTML = ''
+      console.error(error);
 
-  let abertos = 0
-  let andamento = 0
-  let finalizados = 0
+      showTicketMessage(
+        'Erro ao salvar: ' + error.message,
+        'error'
+      );
 
-  data.forEach(ticket => {
-    if (ticket.status === 'Aberto') abertos++
-    if (ticket.status === 'Em andamento') andamento++
-    if (ticket.status === 'Finalizado') finalizados++
+      return;
+    }
 
-    table.innerHTML += `
-      <tr>
-        <td>${ticket.tipo}</td>
-        <td>${ticket.unidade}</td>
-        <td>
-          <span class="status ${getStatusClass(ticket.status)}">
-            ${ticket.status}
-          </span>
-        </td>
-        <td>
-          ${new Date(ticket.created_at).toLocaleDateString('pt-BR')}
-        </td>
-      </tr>
-    `
-  })
+    // ==========================
+    // SUCESSO
+    // ==========================
 
-  document.getElementById('totalChamados').innerText = data.length
-  document.getElementById('abertos').innerText = abertos
-  document.getElementById('andamento').innerText = andamento
-  document.getElementById('finalizados').innerText = finalizados
-}
+    showTicketMessage(
+      `${chamados.length} chamado(s) enviado(s) com sucesso.`,
+      'success'
+    );
 
-function getStatusClass(status) {
-  if (status === 'Aberto') return 'aberto'
-  if (status === 'Em andamento') return 'andamento'
-  if (status === 'Finalizado') return 'finalizado'
-  return 'aberto'
-}
+    resetForm();
 
-function showAuthMessage(message, type) {
-  const div = document.getElementById('authMessage')
-  div.innerHTML = `<div class="message ${type}">${message}</div>`
-}
+    await loadTickets();
 
-function showTicketMessage(message, type) {
-  const div = document.getElementById('ticketMessage')
-  div.innerHTML = `<div class="message ${type}">${message}</div>`
-  if(type === 'success') {
-    setTimeout(() => { div.innerHTML = '' }, 5000);
+  } catch (err) {
+
+    console.error(err);
+
+    showTicketMessage(
+      'Erro inesperado ao salvar chamado.',
+      'error'
+    );
   }
 }
 
-function scrollToForm() {
-  document.getElementById('formSection').scrollIntoView({ behavior: 'smooth' })
-}
-
-async function checkUser() {
-  const { data: { session } } = await client.auth.getSession()
-  if (session?.user) {
-    loadDashboard(session.user)
-  }
-}
-
-checkUser()
 </script>
 
 </body>
