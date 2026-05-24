@@ -770,6 +770,107 @@ async function loadDashboard(user) {
   toggleFormFields();
   await loadTickets()
 }
+
+async function loadTickets() {
+
+  const { data: { user }, error: userError } = await client.auth.getUser()
+
+  if (userError || !user) {
+    console.error('Usuário não encontrado')
+    return
+  }
+
+  // ============================================
+  // BUSCA CHAMADOS DO USUÁRIO
+  // ============================================
+
+  const { data, error } = await client
+    .from('chamados')
+    .select('*')
+    .or(`usuario_id.eq.${user.id},email.eq.${user.email}`)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error(error)
+    showTicketMessage(
+      'Erro ao carregar chamados.',
+      'error'
+    )
+    return
+  }
+
+  const table = document.getElementById('ticketsTable')
+  table.innerHTML = ''
+
+  let abertos = 0
+  let andamento = 0
+  let finalizados = 0
+
+  // ============================================
+  // SEM CHAMADOS
+  // ============================================
+
+  if (!data || data.length === 0) {
+
+    table.innerHTML = `
+      <tr>
+        <td colspan="4" style="text-align:center; padding:30px;">
+          Nenhum chamado encontrado.
+        </td>
+      </tr>
+    `
+
+    document.getElementById('totalChamados').innerText = 0
+    document.getElementById('abertos').innerText = 0
+    document.getElementById('andamento').innerText = 0
+    document.getElementById('finalizados').innerText = 0
+
+    return
+  }
+
+  // ============================================
+  // PREENCHE TABELA
+  // ============================================
+
+  data.forEach(ticket => {
+
+    if (ticket.status === 'Aberto') abertos++
+    if (ticket.status === 'Em andamento') andamento++
+    if (ticket.status === 'Finalizado') finalizados++
+
+    table.innerHTML += `
+      <tr>
+        <td>${ticket.tipo || '-'}</td>
+
+        <td>${ticket.unidade || '-'}</td>
+
+        <td>
+          <span class="status ${getStatusClass(ticket.status)}">
+            ${ticket.status || 'Aberto'}
+          </span>
+        </td>
+
+        <td>
+          ${
+            ticket.created_at
+              ? new Date(ticket.created_at).toLocaleDateString('pt-BR')
+              : '-'
+          }
+        </td>
+      </tr>
+    `
+  })
+
+  // ============================================
+  // CARDS DASHBOARD
+  // ============================================
+
+  document.getElementById('totalChamados').innerText = data.length
+  document.getElementById('abertos').innerText = abertos
+  document.getElementById('andamento').innerText = andamento
+  document.getElementById('finalizados').innerText = finalizados
+}
+
 async function createTicket() {
 
   try {
