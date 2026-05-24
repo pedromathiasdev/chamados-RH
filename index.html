@@ -772,172 +772,171 @@ async function loadDashboard(user) {
 }
 
 async function createTicket() {
-  const { data: { user } } = await client.auth.getUser()
 
-  const tipo = document.getElementById('tipo').value
-  const unidade = document.getElementById('unidade').value
-  let obsGerais = document.getElementById('descricao').value
-  
-  let payloadDescricao = "";
+  try {
 
-  // VALIDAÇÃO E COLETA SE FOR CATEGORIA FÉRIAS
-  if (tipo === 'Férias') {
-    const nomes = document.querySelectorAll('.colab-nome');
-    const matriculas = document.querySelectorAll('.colab-matricula');
-    const datas = document.querySelectorAll('.colab-data');
-    
-    let listaColaboradoresText = [];
-    let valid = true;
-    let validMatricula = true;
+    const { data: { user }, error: userError } = await client.auth.getUser()
 
-    for (let i = 0; i < nomes.length; i++) {
-      const nomeVal = nomes[i].value.trim();
-      const matrVal = matriculas[i].value.trim();
-      const dataVal = datas[i].value;
+    if (userError || !user) {
+      showTicketMessage(
+        'Usuário não autenticado. Faça login novamente.',
+        'error'
+      )
+      return
+    }
 
-      if (!nomeVal || !matrVal || !dataVal) {
-        valid = false;
-        break;
+    const tipo = document.getElementById('tipo').value
+    const unidade = document.getElementById('unidade').value
+    const prioridade = document.getElementById('prioridade').value
+    const observacoes = document.getElementById('descricao').value.trim()
+
+    let chamados = []
+
+    // ======================================
+    // CHAMADOS EM LOTE - FÉRIAS
+    // ======================================
+
+    if (tipo === 'Férias') {
+
+      const nomes = document.querySelectorAll('.colab-nome')
+      const matriculas = document.querySelectorAll('.colab-matricula')
+      const datas = document.querySelectorAll('.colab-data')
+
+      if (nomes.length === 0) {
+        showTicketMessage(
+          'Adicione pelo menos um colaborador.',
+          'error'
+        )
+        return
       }
 
-      if (!validRegraMatricula(matrVal)) {
-        validMatricula = false;
-        break;
+      for (let i = 0; i < nomes.length; i++) {
+
+        const nome = nomes[i].value.trim()
+        const matricula = matriculas[i].value.trim()
+        const dataFerias = datas[i].value
+
+        // =========================
+        // VALIDAÇÕES
+        // =========================
+
+        if (!nome || !matricula || !dataFerias) {
+          showTicketMessage(
+            `Preencha todos os campos do colaborador ${i + 1}.`,
+            'error'
+          )
+          return
+        }
+
+        if (!validarRegraMatricula(matricula)) {
+          showTicketMessage(
+            `A matrícula do colaborador ${nome} é inválida.`,
+            'error'
+          )
+          return
+        }
+
+        // =========================
+        // MONTA OBJETO
+        // =========================
+
+        chamados.push({
+          usuario_id: user.id,
+          email: user.email,
+
+          tipo: tipo,
+          unidade: unidade,
+          prioridade: prioridade,
+
+          colaborador_nome: nome,
+          matricula: matricula,
+          data_ferias: dataFerias,
+
+          descricao: observacoes || null,
+
+          status: 'Aberto'
+        })
       }
 
-      const dataBR = new Date(dataVal + 'T00:00:00').toLocaleDateString('pt-BR');
-      listaColaboradoresText.push(`• Colaborador ${i+1}: ${nomeVal} | Matrícula: ${matrVal} | Início das Férias: ${dataBR}`);
-    }
+    } else {
 
-    if (!valid) {
-      showTicketMessage('Por favor, preencha todos os campos (Nome, Matrícula e Data) de todos os colaboradores incluídos.', 'error');
-      return;
-    }
+      // ======================================
+      // CHAMADOS INDIVIDUAIS
+      // ======================================
 
-    if (!validMatricula) {
-      showTicketMessage('Erro: Existem matrículas fora do intervalo permitido (de 800000 a 9999999).', 'error');
-      return;
-    }
+      const matricula = document.getElementById('matricula').value.trim()
 
-    payloadDescricao = `[LANÇAMENTO EM LOTE - FÉRIAS]\n${listaColaboradoresText.join('\n')}`;
-    if(obsGerais) payloadDescricao += `\n\n[Observações Gerais]: ${obsGerais}`;
+      if (!validarRegraMatricula(matricula)) {
+        showTicketMessage(
+          'A matrícula deve estar entre 800000 e 9999999.',
+          'error'
+        )
+        return
+      }
 
-  } else {
-    // VALIDAÇÃO PARA OUTROS TIPOS DE CHAMADOS (INDIVIDUAL)
-    const matriculaIndividual = document.getElementById('matricula').value.trim();
-    
-    if (!validRegraMatricula(matriculaIndividual)) {
-      showTicketMessage('A matrícula é obrigatória e deve ser um número entre 800000 e 9999999.', 'error');
-      return;
-    }
-    
-    payloadDescricao = `[Matrícula: ${matriculaIndividual}] ${obsGerais}`;
-  }
-
-  // Envio ao banco do Supabase
-  const { error } = await client
-    .from('chamados')
-    .insert([
-      {
+      chamados.push({
         usuario_id: user.id,
         email: user.email,
-        tipo,
-        unidade,
-        descricao: payloadDescricao,
+
+        tipo: tipo,
+        unidade: unidade,
+        prioridade: prioridade,
+
+        matricula: matricula,
+
+        descricao: observacoes || null,
+
         status: 'Aberto'
-      }
-    ])
+      })
+    }
 
-  if (error) {
-    showTicketMessage(error.message, 'error')
-    return
-  }
+    // ======================================
+    // INSERT NO SUPABASE
+    // ======================================
 
-  showTicketMessage('Chamado em lote enviado com sucesso para o RH.', 'success')
-  resetForm();
-  await loadTickets()
-}
+    const { error } = await client
+      .from('chamados')
+      .insert(chamados)
 
-async function loadTickets() {
-  const { data: { user } } = await client.auth.getUser()
+    // ======================================
+    // ERRO AO SALVAR
+    // ======================================
 
-  const { data, error } = await client
-    .from('chamados')
-    .select('*')
-    .eq('usuario_id', user.id)
-    .order('created_at', { ascending: false })
+    if (error) {
 
-  if (error) {
-    console.error(error)
-    return
-  }
+      console.error(error)
 
-  const table = document.getElementById('ticketsTable')
-  table.innerHTML = ''
+      showTicketMessage(
+        `Erro ao salvar chamado: ${error.message}`,
+        'error'
+      )
 
-  let abertos = 0
-  let andamento = 0
-  let finalizados = 0
+      return
+    }
 
-  data.forEach(ticket => {
-    if (ticket.status === 'Aberto') abertos++
-    if (ticket.status === 'Em andamento') andamento++
-    if (ticket.status === 'Finalizado') finalizados++
+    // ======================================
+    // SUCESSO
+    // ======================================
 
-    table.innerHTML += `
-      <tr>
-        <td>${ticket.tipo}</td>
-        <td>${ticket.unidade}</td>
-        <td>
-          <span class="status ${getStatusClass(ticket.status)}">
-            ${ticket.status}
-          </span>
-        </td>
-        <td>
-          ${new Date(ticket.created_at).toLocaleDateString('pt-BR')}
-        </td>
-      </tr>
-    `
-  })
+    showTicketMessage(
+      `${chamados.length} chamado(s) enviado(s) com sucesso.`,
+      'success'
+    )
 
-  document.getElementById('totalChamados').innerText = data.length
-  document.getElementById('abertos').innerText = abertos
-  document.getElementById('andamento').innerText = andamento
-  document.getElementById('finalizados').innerText = finalizados
-}
+    resetForm()
 
-function getStatusClass(status) {
-  if (status === 'Aberto') return 'aberto'
-  if (status === 'Em andamento') return 'andamento'
-  if (status === 'Finalizado') return 'finalizado'
-  return 'aberto'
-}
+    await loadTickets()
 
-function showAuthMessage(message, type) {
-  const div = document.getElementById('authMessage')
-  div.innerHTML = `<div class="message ${type}">${message}</div>`
-}
+  } catch (err) {
 
-function showTicketMessage(message, type) {
-  const div = document.getElementById('ticketMessage')
-  div.innerHTML = `<div class="message ${type}">${message}</div>`
-  if(type === 'success') {
-    setTimeout(() => { div.innerHTML = '' }, 5000);
+    console.error(err)
+
+    showTicketMessage(
+      'Erro inesperado ao enviar chamado.',
+      'error'
+    )
   }
 }
-
-function scrollToForm() {
-  document.getElementById('formSection').scrollIntoView({ behavior: 'smooth' })
-}
-
-async function checkUser() {
-  const { data: { session } } = await client.auth.getSession()
-  if (session?.user) {
-    loadDashboard(session.user)
-  }
-}
-
-checkUser()
 </script>
 
 </body>
