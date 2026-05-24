@@ -770,175 +770,145 @@ async function loadDashboard(user) {
   toggleFormFields();
   await loadTickets()
 }
-
 async function createTicket() {
+try {
 
-  const btn = document.querySelector('.submit-btn')
+```
+const { data: authData, error: authError } = await client.auth.getUser();
 
-  try {
+if (authError || !authData.user) {
+  showTicketMessage('Usuário não autenticado.', 'error');
+  return;
+}
 
-    btn.disabled = true
-    btn.innerText = 'Enviando...'
+const user = authData.user;
 
-    const { data: { user }, error: authError } =
-      await client.auth.getUser()
+const tipo = document.getElementById('tipo').value;
+const unidade = document.getElementById('unidade').value;
+const prioridade = document.getElementById('prioridade').value;
+const descricao = document.getElementById('descricao').value;
 
-    if (authError || !user) {
+let chamados = [];
 
+// =========================
+// FÉRIAS (MÚLTIPLOS COLABORADORES)
+// =========================
+if (tipo === 'Férias') {
+
+  const nomes = document.querySelectorAll('.colab-nome');
+  const matriculas = document.querySelectorAll('.colab-matricula');
+  const datas = document.querySelectorAll('.colab-data');
+
+  for (let i = 0; i < nomes.length; i++) {
+
+    const nome = nomes[i].value.trim();
+    const matricula = matriculas[i].value.trim();
+    const dataFerias = datas[i].value;
+
+    // validações
+    if (!nome || !matricula || !dataFerias) {
       showTicketMessage(
-        'Usuário não autenticado.',
+        `Preencha todos os dados do colaborador ${i + 1}.`,
         'error'
-      )
-
-      return
+      );
+      return;
     }
 
-    const tipo = document.getElementById('tipo').value
-    const unidade = document.getElementById('unidade').value
-    const prioridade = document.getElementById('prioridade').value
-    const descricao = document.getElementById('descricao').value.trim()
-
-    let chamados = []
-
-    // =========================================
-    // FÉRIAS EM LOTE
-    // =========================================
-
-    if (tipo === 'Férias') {
-
-      const nomes = document.querySelectorAll('.colab-nome')
-      const matriculas = document.querySelectorAll('.colab-matricula')
-      const datas = document.querySelectorAll('.colab-data')
-
-      for (let i = 0; i < nomes.length; i++) {
-
-        const nome = nomes[i].value.trim()
-        const matricula = matriculas[i].value.trim()
-        const dataFerias = datas[i].value
-
-        if (!nome || !matricula || !dataFerias) {
-
-          showTicketMessage(
-            `Preencha todos os dados do colaborador ${i + 1}.`,
-            'error'
-          )
-
-          return
-        }
-
-        if (!validarRegraMatricula(matricula)) {
-
-          showTicketMessage(
-            `Matrícula inválida para ${nome}.`,
-            'error'
-          )
-
-          return
-        }
-
-        chamados.push({
-
-          usuario_id: user.id,
-          email: user.email,
-
-          tipo: tipo,
-          unidade: unidade,
-          prioridade: prioridade,
-
-          colaborador_nome: nome,
-          matricula: matricula,
-          data_ferias: dataFerias,
-
-          descricao: descricao,
-
-          status: 'Aberto'
-        })
-      }
-
-    } else {
-
-      // =========================================
-      // CHAMADO INDIVIDUAL
-      // =========================================
-
-      const matricula =
-        document.getElementById('matricula').value.trim()
-
-      if (!validarRegraMatricula(matricula)) {
-
-        showTicketMessage(
-          'Matrícula inválida.',
-          'error'
-        )
-
-        return
-      }
-
-      chamados.push({
-
-        usuario_id: user.id,
-        email: user.email,
-
-        tipo: tipo,
-        unidade: unidade,
-        prioridade: prioridade,
-
-        matricula: matricula,
-
-        descricao: descricao,
-
-        status: 'Aberto'
-      })
-    }
-
-    console.log('Enviando chamados:', chamados)
-
-    // =========================================
-    // INSERT
-    // =========================================
-
-    const { data, error } = await client
-      .from('chamados')
-      .insert(chamados)
-      .select()
-
-    if (error) {
-
-      console.error('ERRO SUPABASE:', error)
-
+    if (!validarRegraMatricula(matricula)) {
       showTicketMessage(
-        error.message,
+        `Matrícula inválida no colaborador ${i + 1}.`,
         'error'
-      )
-
-      return
+      );
+      return;
     }
 
-    console.log('SALVO:', data)
-
-    showTicketMessage(
-      `${chamados.length} chamado(s) enviado(s) com sucesso.`,
-      'success'
-    )
-
-    resetForm()
-
-    await loadTickets()
-
-  } catch (err) {
-
-    console.error('ERRO GERAL:', err)
-
-    showTicketMessage(
-      err.message || 'Erro inesperado.',
-      'error'
-    )
-
-  } finally {
-
-    btn.disabled = false
-    btn.innerText = 'Enviar Chamado'
+    chamados.push({
+      usuario_id: user.id,
+      email: user.email,
+      tipo: tipo,
+      unidade: unidade,
+      prioridade: prioridade,
+      nome_colaborador: nome,
+      matricula: matricula,
+      data_ferias: dataFerias,
+      descricao: descricao,
+      status: 'Aberto'
+    });
   }
+
+} else {
+
+  // =========================
+  // CHAMADO INDIVIDUAL
+  // =========================
+
+  const matricula = document.getElementById('matricula').value.trim();
+
+  if (!validarRegraMatricula(matricula)) {
+    showTicketMessage(
+      'A matrícula deve estar entre 800000 e 9999999.',
+      'error'
+    );
+    return;
+  }
+
+  chamados.push({
+    usuario_id: user.id,
+    email: user.email,
+    tipo: tipo,
+    unidade: unidade,
+    prioridade: prioridade,
+    matricula: matricula,
+    descricao: descricao,
+    status: 'Aberto'
+  });
+}
+
+// =========================
+// INSERT NO SUPABASE
+// =========================
+
+const { error } = await client
+  .from('chamados')
+  .insert(chamados);
+
+if (error) {
+  console.error(error);
+
+  showTicketMessage(
+    'Erro ao salvar chamado: ' + error.message,
+    'error'
+  );
+
+  return;
+}
+
+// =========================
+// SUCESSO
+// =========================
+
+showTicketMessage(
+  `${chamados.length} chamado(s) enviado(s) com sucesso.`,
+  'success'
+);
+
+resetForm();
+
+await loadTickets();
+```
+
+} catch (err) {
+
+```
+console.error(err);
+
+showTicketMessage(
+  'Erro inesperado ao enviar chamado.',
+  'error'
+);
+```
+
+}
 }
 </script>
 </body>
