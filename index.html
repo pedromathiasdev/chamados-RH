@@ -771,6 +771,7 @@ async function loadDashboard(user) {
   await loadTickets()
 }
 async function createTicket() {
+
 try {
 
 ```
@@ -791,7 +792,7 @@ const descricao = document.getElementById('descricao').value;
 let chamados = [];
 
 // =========================
-// FÉRIAS (MÚLTIPLOS COLABORADORES)
+// FÉRIAS - MÚLTIPLOS COLABORADORES
 // =========================
 if (tipo === 'Férias') {
 
@@ -865,15 +866,17 @@ if (tipo === 'Férias') {
 }
 
 // =========================
-// INSERT NO SUPABASE
+// SALVAR NO SUPABASE
 // =========================
 
-const { error } = await client
+const { data, error } = await client
   .from('chamados')
-  .insert(chamados);
+  .insert(chamados)
+  .select();
 
 if (error) {
-  console.error(error);
+
+  console.error('ERRO SUPABASE:', error);
 
   showTicketMessage(
     'Erro ao salvar chamado: ' + error.message,
@@ -883,9 +886,7 @@ if (error) {
   return;
 }
 
-// =========================
-// SUCESSO
-// =========================
+console.log('Chamados salvos:', data);
 
 showTicketMessage(
   `${chamados.length} chamado(s) enviado(s) com sucesso.`,
@@ -900,7 +901,7 @@ await loadTickets();
 } catch (err) {
 
 ```
-console.error(err);
+console.error('ERRO GERAL:', err);
 
 showTicketMessage(
   'Erro inesperado ao enviar chamado.',
